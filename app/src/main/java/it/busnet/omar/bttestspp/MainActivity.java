@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         bt.startService(false); // start bluetooth service
 
         Intent intent = new Intent(getApplicationContext(), DeviceList.class);
-        //startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
+        startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
 
         Button send = (Button) findViewById(R.id.button);
 
@@ -62,18 +62,25 @@ public class MainActivity extends AppCompatActivity {
 
         bt.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
             public void onDataReceived(byte[] data, String message) {
-              Log.d("RECEIVE", message);
+                Log.d("RECEIVE", message);
+
+                String fist = "$destination=";
+                String end = ";navigate@";
+                if(message.contains(fist)){
+                    if(message.contains(end)){
+                        String result = message.substring(message.indexOf(fist) + fist.length() , message.indexOf(end));
+                        openNavigation(result);
+                    }
+                }
             }
         });
-/*
 
-        String uri = String.format(Locale.ITALIAN, "geo:%f,%f",  45.4071109, 11.8745363);
-        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-        startActivity(i);
-*/
+    }
 
+
+
+    private void openNavigation(String cord){
         Intent mapIntent = new Intent();
-
         // we want to view the map
         mapIntent.setAction(Intent.ACTION_VIEW);
 
@@ -81,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
         // the coordinate 53.2,8.8 is in north germany where the map is centered around
         // z=1 means zoomlevel=1 showing the continent
         // the marker's caption will be "primary marker"
-        Uri uri = Uri.parse("geo:45.4071109, 11.8745363?q=(primary+marker)&z=1");
+        Uri uri = Uri.parse("geo:"+cord+"?q="+cord+"(Posizione)");
         mapIntent.setDataAndType(uri, null);
 
         // this is the maps Caption
@@ -89,18 +96,15 @@ public class MainActivity extends AppCompatActivity {
 
         // the map will contain 2 additional point of interest
         mapIntent.putExtra("de.k3b.POIS",
-                "<poi ll='45.4071109, 11.8745363'/>\n" +
-                      "");
+                "<poi ll='"+cord+"'/>\n" +
+                        "");
 
         try {
             startActivityForResult(Intent.createChooser(mapIntent,"Choose app to show location"), 4711);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
-
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(requestCode == BluetoothState.REQUEST_CONNECT_DEVICE) {
