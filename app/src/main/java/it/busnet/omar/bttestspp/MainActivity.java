@@ -255,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
 
             // Keep looping to listen for received messages
             while (true) {
-                try {
+                try {//$destination=45.55432925,11.9816445;navigate@
                     bytes = mmInStream.read(buffer);            //read bytes from input buffer
                     String readMessage = new String(buffer, 0, bytes);
                     // Send the obtained bytes to the UI Activity via handler
@@ -263,14 +263,14 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("Carattere letto: ", readMessage);
                     Log.d("Stringa: ", stringaletta.toString());
 
-                    if(readMessage.equals("$")){
+                    if(readMessage.contains("$")){
                         leggi = true;
-                    }else if(readMessage.equals("@")){
+                    }else if(readMessage.contains("@")){
                         stringaletta.append(readMessage);
-                        Log.d("Stringa: ", stringaletta.toString());
+                        Log.d("Stringa che mando: ", stringaletta.toString());
                         leggi = false;
-                        stringaletta = new StringBuilder();
                         getCoords(stringaletta.toString());
+                        stringaletta = new StringBuilder();
                     }
 
                     if(leggi){
@@ -292,10 +292,10 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("CONTROLLA", "Ok Apri navigatore");
                     openNavigation(coords);
                 }else {
-                    Log.d("CONTROLLA", "Stringa non valida");
+                    Log.d("CONTROLLA", "Stringa non valida 2");
                 }
             }else {
-                Log.d("CONTROLLA", "Stringa non valida");
+                Log.d("CONTROLLA", "Stringa non valida 1");
             }
         }
 
