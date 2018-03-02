@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">Radio VDF</string>
+    <string name="app_name">S.O. Navi</string>
+    <string name="text">Questo software è stato realizzato senza scopo di lucro per i Vigili del Fuoco di Padova.</string>
+    <string name="credits">Powered by <a href="https://www.busnet.it/">Busnet.it</a></string>
 </resources>

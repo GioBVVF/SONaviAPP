@@ -194,7 +194,9 @@ public class MainActivity extends AppCompatActivity {
         try
         {
             //Don't leave Bluetooth sockets open when leaving activity
-            btSocket.close();
+            if(btSocket != null) {
+                btSocket.close();
+            }
         } catch (IOException e2) {
             //insert code to deal with this
         }

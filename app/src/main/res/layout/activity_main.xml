@@ -14,10 +14,36 @@
         android:layout_height="wrap_content"
         android:text="Riconnetti" />
 
-    <Button
-        android:visibility="gone"
-        android:id="@+id/button2"
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+    </FrameLayout>
+
+    <!-- content fixated to the bottom of the screen -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Connect" />
+        android:orientation="vertical">
+
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/text" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:autoLink="web"
+            android:text="@string/credits" />
+    </LinearLayout>
+
+
 </LinearLayout>
