@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
         Intent mapIntent = new Intent();
         // we want to view the map
         mapIntent.setAction(Intent.ACTION_VIEW);
-
+        mapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         // this will be shown as primary marker in the map
         // the coordinate 53.2,8.8 is in north germany where the map is centered around
         // z=1 means zoomlevel=1 showing the continent
@@ -152,7 +152,12 @@ public class MainActivity extends AppCompatActivity {
                         "");
 
         try {
-            startActivityForResult(Intent.createChooser(mapIntent,"Attenzione nuove coordinate!"), 4711);
+
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
+                startActivityForResult(mapIntent, 4711);
+            else {
+                startActivityForResult(Intent.createChooser(mapIntent, "Attenzione nuove coordinate!"), 4711);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
