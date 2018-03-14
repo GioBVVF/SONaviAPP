@@ -1,18 +1,26 @@
 package it.busnet.omar.bttestspp;
 
+import android.app.ActivityManager;
+import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -21,6 +29,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -55,7 +65,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 try {
-                    btSocket.close();
+                    if(btSocket != null) {
+                        btSocket.close();
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -97,7 +109,13 @@ public class MainActivity extends AppCompatActivity {
 
                 BluetoothDevice device = findDevices(strName);
                 deviceSelected = device;
-                connect(device);
+                //connect(device);
+                //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                HelloService.mainActivity = MainActivity.this;
+                Intent i =  new Intent(MainActivity.this, HelloService.class);
+                startService(i);
+
+                //}
             }
         });
         builderSingle.show();
@@ -134,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
                         "");
 
         try {
-            startActivityForResult(Intent.createChooser(mapIntent,"Choose app to show location"), 4711);
+            startActivityForResult(Intent.createChooser(mapIntent,"Attenzione nuove coordinate!"), 4711);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -148,6 +166,9 @@ public class MainActivity extends AppCompatActivity {
     public void connect(BluetoothDevice device){
         try {
             btSocket = createBluetoothSocket(device);
+
+
+
         } catch (IOException e) {
             Toast.makeText(getBaseContext(), "Socket creation failed", Toast.LENGTH_LONG).show();
         }
@@ -155,6 +176,16 @@ public class MainActivity extends AppCompatActivity {
         try
         {
             btSocket.connect();
+
+            Thread.sleep(2000);
+
+            if(btSocket.isConnected()){
+                TextView  textView = (TextView) findViewById(R.id.connesso);
+                textView.setText("Connsesso a " + device.getName());
+            }else {
+                Toast.makeText(getBaseContext(), "Errore connessione", Toast.LENGTH_LONG).show();
+            }
+
         } catch (IOException e) {
             try
             {
@@ -163,6 +194,8 @@ public class MainActivity extends AppCompatActivity {
             {
                 //insert code to deal with this
             }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         mConnectedThread = new ConnectedThread(btSocket);
         mConnectedThread.start();
@@ -176,14 +209,16 @@ public class MainActivity extends AppCompatActivity {
         if(btSocket == null || !btSocket.isConnected()) {
 
             if (deviceSelected != null) {
-                connect(deviceSelected);
+                stopService(new Intent(MainActivity.this, HelloService.class));
+                startService(new Intent(MainActivity.this, HelloService.class));
+                //connect(deviceSelected);
             } else {
                 deviceSelected = null;
                 List<String> s = pairedDevicesString();
                 setListAdapter(new ArrayAdapter<String>(this, android.R.layout.select_dialog_singlechoice, s));
             }
         }else {
-            Toast.makeText(getApplicationContext(), "Connesso.",Toast.LENGTH_LONG).show();
+           // Toast.makeText(getApplicationContext(), "Connesso.",Toast.LENGTH_LONG).show();
         }
     }
 
@@ -209,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(getBaseContext(), "Questo dispositivo non supporta il Bluetooth", Toast.LENGTH_LONG).show();
         } else {
             if (mBluetoothAdapter.isEnabled()) {
+                //Toast.makeText(getBaseContext(), "Adapter ok", Toast.LENGTH_LONG).show();
             } else {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, 1);
@@ -317,5 +353,133 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    public static class HelloService extends Service {
+
+
+        // Handler that receives messages from the thread
+
+        Timer timer = new Timer();
+        TimerTask updateProfile = new CustomTimerTask(HelloService.this);
+
+
+        static public MainActivity mainActivity;
+
+        public HelloService() {
+            super();
+        }
+
+        @Override
+        public void onCreate() {
+            // Start up the thread running the service.  Note that we create a
+            // separate thread because the service normally runs in the process's
+            // main thread, which we don't want to block.  We also make it
+            // background priority so CPU-intensive work will not disrupt our UI.
+            super.onCreate();
+            timer.scheduleAtFixedRate(updateProfile, 0, 1000);
+
+            // Timer task makes your service will repeat after every 20 Sec.
+
+
+        }
+
+        @Override
+        public int onStartCommand(Intent intent, int flags, int startId) {
+            Log.d("SERVICe", "create service");
+            Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+            //mainActivity.connect(mainActivity.deviceSelected);
+            // For each start request, send a message to start a job and deliver the
+            // start ID so we know which request we're stopping when we finish the job
+            //Message msg = mServiceHandler.obtainMessage();
+            //msg.arg1 = startId;
+            //mServiceHandler.sendMessage(msg);
+
+            // If we get killed, after returning from here, restart
+            return Service.START_STICKY;
+        }
+
+        @Nullable
+        @Override
+        public IBinder onBind(Intent intent) {
+            // We don't provide binding, so return null
+            return null;
+        }
+
+        @Override
+        public void onDestroy() {
+            Log.d("SERVICe", "end service");
+            Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+        }
+
+
+        public static boolean isAppRunning(final Context context, final String packageName) {
+            final ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            final List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
+            if (procInfos != null)
+            {
+                for (final ActivityManager.RunningAppProcessInfo processInfo : procInfos) {
+                    if (processInfo.processName.equals(packageName)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+
+        public class CustomTimerTask extends TimerTask {
+
+
+            private Context context;
+            private Handler mHandler = new Handler();
+
+            public CustomTimerTask(Context con) {
+                this.context = con;
+            }
+
+
+
+            @Override
+            public void run() {
+                new Thread(new Runnable() {
+
+                    public void run() {
+
+                        mHandler.post(new Runnable() {
+                            public void run() {
+                                //Toast.makeText(context, "DISPLAY YOUR MESSAGE", Toast.LENGTH_SHORT).show();
+                                Log.d("SERVICE", "service runngin 1");
+
+                                if(!isAppRunning(context, getPackageName())){
+                                    if(mainActivity.btSocket.isConnected()){
+                                        Log.d("SERVICE", getPackageName() + " connesso");
+                                    }else {
+                                        mainActivity.connect(mainActivity.deviceSelected);
+                                    }
+                                }else{
+                                    Log.d("SERVICE", getPackageName() + " is running");
+                                    if(mainActivity!=null) {
+                                        if (mainActivity.btSocket != null) {
+                                            if (mainActivity.btSocket.isConnected()) {
+                                                Log.d("SERVICE", getPackageName() + " connesso");
+                                            } else {
+                                                mainActivity.connect(mainActivity.deviceSelected);
+                                            }
+                                        } else {
+                                            mainActivity.connect(mainActivity.deviceSelected);
+                                        }
+                                    }
+                                }
+
+                            }
+                        });
+                    }
+                }).start();
+
+            }
+
+        }
+
+
+    }
 
 }
